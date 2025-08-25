@@ -1,30 +1,60 @@
-/**
- * Service class for making callouts to the Jira API
- */
 public with sharing class JiraAPIService {
-	/**
-	 * Creates a project in Jira
-	 * @param projectWrapper The project wrapper object containing all necessary data
-	 * @return String The Jira project ID
-	 *
-	 * TODO: Implement this method to make a callout to Jira API to create a project
-	 * Reminder: Extract and return the project ID from the response
-	 */
+	private static final String NAMED_CREDENTIAL = 'callout:Jira_API';
+
 	public static String createProject(JiraWrapper.ProjectWrapper projectWrapper) {
-		// Your implementation goes here
-		return null;
+		String path = '/project';
+		String method = 'POST';
+		Map<String, Object> payloadMap = new Map<String, Object>{
+			'name' => projectWrapper.name,
+			'key' => projectWrapper.key,
+			'description' => projectWrapper.description,
+			'leadAccountId' => projectWrapper.leadAccountId,
+			'projectTemplateKey' => projectWrapper.projectTemplateKey
+		};
+		String payload = JSON.serialize(payloadMap, true);
+
+		HttpResponse res = jiraCallout(path, method, payload);
+		switch on res.getStatusCode() {
+			when 201 {
+				Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+				return String.valueOf(responseBody.get('id'));
+			}
+			when else {
+				System.debug(res.getStatusCode() + ' ' + res.getStatus() + ': ' + res.getBody());
+				return null;
+			}
+		}
 	}
 
-	/**
-	 * Creates an issue in Jira
-	 * @param issueWrapper The issue wrapper object containing all necessary data
-	 * @return String The Jira issue key
-	 *
-	 * TODO: Implement this method to make a callout to Jira API to create an issue
-	 * Reminder: Extract and return the issue key from the response
-	 */
 	public static String createIssue(JiraWrapper.IssueWrapper issueWrapper) {
-		// Your implementation goes here
-		return null;
+		String path = '/issue';
+		String method = 'POST';
+		Map<String, Object> payloadMap =  issueWrapper.generateIssuePayloadMap();
+		String payload = JSON.serialize(payloadMap, true);
+
+		HttpResponse res = jiraCallout(path, method, payload);
+		switch on res.getStatusCode() {
+			when 201 {
+				Map<String, Object> responseBody = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
+				return String.valueOf(responseBody.get('key'));
+			}
+			when else {
+				System.debug(res.getStatusCode() + ' ' + res.getStatus() + ': ' + res.getBody());
+				return null;
+			}
+		}
+	}
+
+	public static HttpResponse jiraCallout(String path, String method, String payload) {
+		HttpRequest req = new HttpRequest();
+		req.setEndpoint(NAMED_CREDENTIAL + path);
+		req.setMethod(method);
+		req.setHeader('Content-Type', 'application/json');
+		req.setHeader('Accept', 'application/json');
+		req.setTimeout(100000); // 1 minute
+		req.setBody(payload);
+
+		Http http = new Http();
+		return http.send(req);
 	}
 }
