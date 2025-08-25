@@ -1,13 +1,7 @@
-/**
- * Wrapper classes for Jira entities (Project and Issue)
- */
 public class JiraWrapper {
-	private static final String LEAD_ACCOUNT_ID = '1337:0123456789-bfa0-40f4-bd28-25ae65c3e5b1';
+	private static final String LEAD_ACCOUNT_ID = '712020:5376d4b5-6de3-4d52-80f5-b861678d663f';
 	private static final String PROJECT_TEMPLATE_KEY = 'com.pyxis.greenhopper.jira:basic-software-development-template';
 
-	/**
-	 * Wrapper for Jira Project
-	 */
 	public class ProjectWrapper {
 		public String name;
 		public String key;
@@ -15,9 +9,6 @@ public class JiraWrapper {
 		public String leadAccountId;
 		public String projectTemplateKey;
 
-		/**
-		 * Constructor for ProjectWrapper
-		 */
 		public ProjectWrapper(String name, String key, String description) {
 			this.name = name;
 			this.key = key;
@@ -27,9 +18,6 @@ public class JiraWrapper {
 		}
 	}
 
-	/**
-	 * Wrapper for Jira Issue
-	 */
 	public class IssueWrapper {
 		public String name;
 		public String key;
@@ -38,9 +26,6 @@ public class JiraWrapper {
 		public String summary;
 		public String issueType;
 
-		/**
-		 * Constructor for IssueWrapper
-		 */
 		public IssueWrapper(
 			String projectKey,
 			String summary,
@@ -53,52 +38,45 @@ public class JiraWrapper {
 			this.issueType = (String.isNotBlank(issueType)) ? issueType : 'Task';
 		}
 
-		/**
-		 * Convert IssueWrapper to a Map for serialization
-		 *
-		 * TODO: Implement this method to create a Map that represents
-		 * the JSON payload needed for the Jira API. The Map should contain:
-		 * - fields object with project information (key)
-		 * - issuetype object with the issue type name
-		 * - summary field
-		 * - description field (formatted using formatDescription method)
-		 * - Example:
-		 */
 		public Map<String, Object> generateIssuePayloadMap() {
-			// Your implementation goes here
-			return null;
+			Map<String, Object> payload = new Map<String, Object>();
+			Map<String, Object> fields = new Map<String, Object>();
+			
+			Map<String, Object> project = new Map<String, Object>();
+			project.put('key',this.projectKey);
+			fields.put('project', project);
+			
+			Map<String, Object> issuetype = new Map<String, Object>();
+			issuetype.put('name', this.issueType);
+			fields.put('issuetype', issuetype);
+			
+			fields.put('summary', this.summary);
+			fields.put('description', formatDescription(this.description));
+			
+			payload.put('fields', fields);
+			return payload;
 		}
 
-		/**
-		 * Format description as per Jira Cloud API requirements
-		 *
-		 * TODO: Implement this method to format the description text
-		 * according to Jira Cloud API requirements.
-		 * - Create a Map with type="doc" and version=1
-		 * - Add content array with paragraph object
-		 * - Add text object inside paragraph content with the description
-		 * - Example:
-		 *   {
-		 *     "description": {
-		 *       "type": "doc",
-		 *       "version": 1,
-		 *       "content": [
-		 *         {
-		 *           "type": "paragraph",
-		 *           "content": [
-		 *             {
-		 *               "type": "text",
-		 *               "text": "Order entry fails when selecting supplier."
-		 *             }
-		 *           ]
-		 *         }
-		 *       ]
-		 *     }
-		 *   }
-		 */
 		private Map<String, Object> formatDescription(String descText) {
-			// Your implementation goes here
-			return null;
+			Map<String, Object> description = new Map<String, Object>();
+			description.put('type', 'doc');
+			description.put('version', 1);
+			
+			List<Object> content = new List<Object>();
+			Map<String, Object> paragraph = new Map<String, Object>();
+			paragraph.put('type', 'paragraph');
+			
+			List<Object> paragraphContent = new List<Object>();
+			Map<String, Object> textNode = new Map<String, Object>();
+			textNode.put('type', 'text');
+			textNode.put('text', descText);
+			paragraphContent.add(textNode);
+			
+			paragraph.put('content', paragraphContent);
+			content.add(paragraph);
+			description.put('content', content);
+
+			return description;
 		}
 	}
 }

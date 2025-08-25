@@ -1,6 +1,3 @@
-/**
- * Queueable class to make asynchronous callouts to Jira API
- */
 public class JiraCalloutQueueable implements Queueable, Database.AllowsCallouts {
 	// Simple constants instead of enum
 	public static final String TYPE_PROJECT = 'PROJECT';
@@ -46,44 +43,27 @@ public class JiraCalloutQueueable implements Queueable, Database.AllowsCallouts 
 	) {
 		this.calloutType = TYPE_ISSUE;
 		this.recordId = recordId;
-		this.issueWrapper = new JiraWrapper.IssueWrapper(
-			projectKey,
-			summary,
-			description,
-			issueType
-		);
+		this.issueWrapper = new JiraWrapper.IssueWrapper(projectKey, summary, description, issueType);
 	}
 
-	/**
-	 * Execute the callout based on the callout type
-	 *
-	 * TODO: Implement this method to:
-	 * 1. Check the callout type (TYPE_PROJECT or TYPE_ISSUE)
-	 * 2. Call the appropriate JiraAPIService method
-	 * 3. Update the corresponding Salesforce record with the Jira ID/Key
-	 */
 	public void execute(QueueableContext context) {
-		// Your implementation goes here
+		switch on this.calloutType {
+			when 'PROJECT' {
+				String jiraProjectId = JiraAPIService.createProject(this.projectWrapper);
+				updateJiraProject(jiraProjectId);
+			}
+			when 'ISSUE' {
+				String jiraIssueKey = JiraAPIService.createIssue(this.issueWrapper);
+				updateJiraIssue(jiraIssueKey);
+			}
+		}
 	}
 
-	/**
-	 * Update the Jira Project record with the Jira project Id
-	 *
-	 * TODO: Implement this method to update the Jira_Project__c record
-	 * with the Jira project ID returned from the API
-	 */
 	private void updateJiraProject(String jiraProjectId) {
-		// Your implementation goes here
+		Database.update(new Jira_Project__c(Id = this.recordId, Project_ID__c = jiraProjectId), AccessLevel.SYSTEM_MODE);
 	}
 
-	/**
-	 * Update the Jira Issue record with the Jira issue key
-	 *
-	 * TODO: Implement this method to update the Jira_Issue__c record
-	 * with the Jira issue key returned from the API
-	 * Don't forget to update the Last_Updated__c field with the current time
-	 */
 	private void updateJiraIssue(String jiraIssueKey) {
-		// Your implementation goes here
+		Database.update(new Jira_Issue__c(Id = this.recordId, Issue_Key__c = jiraIssueKey, Last_Updated__c = Datetime.now()), AccessLevel.SYSTEM_MODE);
 	}
 }
